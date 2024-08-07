@@ -52,8 +52,7 @@ class Trainer:
             self.model = torch.nn.DataParallel(self.model).to(self.device)
         elif torch.backends.mps.is_available() and not self.model.rope:
             self.device = 'mps'
-            #self.model = self.model.to(self.device)
-            self.model = torch.nn.DataParallel(self.model).to(self.device)
+            self.model = self.model.to(self.device) 
 
     def save_checkpoint(self):
         if self.config.ckpt_path is not None:
