@@ -101,9 +101,9 @@ def apply_rotary_emb(x, rope_cache):
 
     ##
     #print(f"x shape: {x.shape}")
-    print(f"x_complex shape: {x_complex.shape}")
+    #print(f"x_complex shape: {x_complex.shape}")
     #print(f"rope_cache shape: {rope_cache.shape}")
-    print(f"freqs_complex shape: {freqs_complex.shape}")
+    #print(f"freqs_complex shape: {freqs_complex.shape}")
     ##
     #x_complex = x_complex.unsqueeze(-1)
     x_rotated = x_complex * freqs_complex
