@@ -38,6 +38,18 @@ def precompute_rotary_emb(dim, max_positions):
     rope_cache = None
     # TODO: [part g]
     ### YOUR CODE HERE ###
+    assert dim % 2 == 0, "Dimension must be divisible by 2"
+
+    theta_numerator = torch.arange(0, dim, 2).float() # 0, 2, 4, ..., dim-2
+
+    theta = 1.0 / (10000.0 ** (theta_numerator / dim)) # (Dim / 2)
+
+    m = torch.arange(max_positions)
+
+    freqs = torch.outer(m, theta).float() # (max_positions, dim / 2)
+
+    rope_cache = torch.polar(torch.ones_like(freqs), freqs) # (max_positions, dim / 2)
+
     pass
     ### END YOUR CODE ###
     return rope_cache
@@ -58,6 +70,41 @@ def apply_rotary_emb(x, rope_cache):
 
     rotated_x = None
     ### YOUR CODE HERE ###
+
+    #print(x.shape) 
+    # (B, nh, T, hs): torch.Size([128, 8, 128, 32])
+
+    '''
+    This reshapes x from (B, nh, T, hs) to (B, nh, T, hs/2, 2) and then views it as a complex tensor with shape (B, nh, T, hs/2).
+    This is because the RoPE values are stored as complex numbers, so we need to convert the input tensor to a complex tensor to perform the multiplication.
+    '''
+    x_complex = torch.view_as_complex(x.float().reshape(*x.shape[:-1], -1, 2)) # (B, nh, T, hs/2)
+
+    ''' for the rope_cahe: It contains (max_positions, dim / 2)
+    
+            To match the dimensions of x_complex, we need to add two dimensions to the rope_cache tensor to the (1, 1, max_positions, dim / 2) shape.   
+
+                -> unsqueeze(0) adds a dimension at the beginning of the tensor
+    
+    '''
+
+    #print(x_complex.shape)
+
+    #print(rope_cache.shape)
+    #rope_cache = rope_cache[:x_complex.shape[1]] # (Seq_Len, H, Head_Dim/2)
+
+    rope_cache = rope_cache[:x_complex.shape[2]]
+    freqs_complex = rope_cache.unsqueeze(0).unsqueeze(1)
+
+    #print(freqs_complex.shape)
+
+
+    x_rotated = x_complex * freqs_complex
+
+    x_out = torch.view_as_real(x_rotated) # (B, Seq_Len, H, Head_Dim/2, 2)
+
+    rotated_x = x_out.reshape(*x.shape) # (B, Seq_Len, H, Head_Dim)
+
     pass
     ### END YOUR CODE ###
     return rotated_x
@@ -86,6 +133,8 @@ class CausalSelfAttention(nn.Module):
             # Hint: The maximum sequence length is given by config.block_size.
             rope_cache = None
             ### YOUR CODE HERE ###
+            rope_cache = precompute_rotary_emb(config.n_embd // config.n_head, config.block_size)
+
             pass
             ### END YOUR CODE ###
 
@@ -113,6 +162,8 @@ class CausalSelfAttention(nn.Module):
             # TODO: [part g] Apply RoPE to the query and key.
             ### YOUR CODE HERE ###
             pass
+            q = apply_rotary_emb(q, self.rope_cache)
+            k = apply_rotary_emb(k, self.rope_cache)
             ### END YOUR CODE ###
 
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
