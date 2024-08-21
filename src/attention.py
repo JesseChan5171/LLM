@@ -105,7 +105,7 @@ def apply_rotary_emb(x, rope_cache):
     print(f"rope_cache shape: {rope_cache.shape}")
     print(f"freqs_complex shape: {freqs_complex.shape}")
     ##
-
+    x_complex = x_complex.unsqueeze(-1)
     x_rotated = x_complex * freqs_complex
 
     x_out = torch.view_as_real(x_rotated) # (B, Seq_Len, H, Head_Dim/2, 2)
