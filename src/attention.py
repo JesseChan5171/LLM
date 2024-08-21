@@ -93,7 +93,7 @@ def apply_rotary_emb(x, rope_cache):
     #print(rope_cache.shape)
     #rope_cache = rope_cache[:x_complex.shape[1]] # (Seq_Len, H, Head_Dim/2)
 
-    rope_cache = rope_cache[:x_complex.shape[2]]
+    rope_cache = rope_cache[:x_complex.shape[2], :, :]
     freqs_complex = rope_cache.unsqueeze(0).unsqueeze(1)
 
     #print(freqs_complex.shape)
