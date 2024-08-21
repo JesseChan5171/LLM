@@ -111,8 +111,8 @@ def apply_rotary_emb(x, rope_cache):
     x_out = torch.view_as_real(x_rotated) # (B, Seq_Len, H, Head_Dim/2, 2)
     #x_out = torch.view_as_real(torch.view_as_complex(x_rotated))
 
-    rotated_x = x_out.reshape(*x.shape) # (B, Seq_Len, H, Head_Dim)
-
+    #rotated_x = x_out.reshape(*x.shape) # (B, Seq_Len, H, Head_Dim)
+    rotated_x = x_out.view(*x.shape[:-1], x.shape[-1])
     pass
     ### END YOUR CODE ###
     return rotated_x
