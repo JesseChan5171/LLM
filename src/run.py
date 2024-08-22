@@ -175,7 +175,7 @@ elif args.function == "finetune":
         lr_decay=True,
         warmup_tokens=512 * 20,
         final_tokens=200 * len(pretrain_dataset) * block_size,
-        num_workers=0,
+        num_workers=4,
     )
 
     trainer = trainer.Trainer(model, train_dataset, None, tconf)
