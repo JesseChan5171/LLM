@@ -86,15 +86,18 @@ def apply_rotary_emb(x, rope_cache):
     This reshapes x from (B, nh, T, hs) to (B, nh, T, hs/2, 2) and then views it as a complex tensor with shape (B, nh, T, hs/2).
     This is because the RoPE values are stored as complex numbers, so we need to convert the input tensor to a complex tensor to perform the multiplication.
     '''
+    '''
+    
+    
     x_complex = torch.view_as_complex(x.float().reshape(*x.shape[:-1], -1, 2)) # (B, nh, T, hs/2) Because h2/2 contains complex numebr 
 
-    ''' for the rope_cahe: It contains (max_positions, dim / 2)
+    " for the rope_cahe: It contains (max_positions, dim / 2)
     
             To match the dimensions of x_complex, we need to add two dimensions to the rope_cache tensor to the (1, 1, max_positions, dim / 2) shape.   
 
                 -> unsqueeze(0) adds a dimension at the beginning of the tensor
     
-    '''
+    "
 
     #print(x_complex.shape)
 
@@ -121,7 +124,25 @@ def apply_rotary_emb(x, rope_cache):
 
     rotated_x = x_out.reshape(*x.shape) # (B, Seq_Len, H, Head_Dim)
     #rotated_x = x_out.view(*x.shape[:-1], x.shape[-1])
+    '''
+    x_reshaped = x.view(*x.shape[:-1], -1, 2)  # (B, nh, T, hs/2, 2)
 
+    # Truncate rope_cache to match the sequence length T in x
+    rope_cache = rope_cache[:x.shape[2]]  # (T, dim/2, 2)
+
+    # Expand rope_cache to match the batch and head dimensions of x
+    rope_cache = rope_cache.unsqueeze(0).unsqueeze(0)  # (1, 1, T, dim/2, 2)
+
+    # Apply RoPE by element-wise multiplication between x_reshaped and rope_cache
+    x_rotated = torch.stack([
+        x_reshaped[..., 0] * rope_cache[..., 0] - x_reshaped[..., 1] * rope_cache[..., 1],
+        x_reshaped[..., 0] * rope_cache[..., 1] + x_reshaped[..., 1] * rope_cache[..., 0]
+    ], dim=-1)  # (B, nh, T, hs/2, 2)
+
+    # Reshape x_rotated back to the original shape (B, nh, T, hs)
+    rotated_x = x_rotated.view(*x.shape)
+    
+    
     ### END YOUR CODE ###
     return rotated_x
 
