@@ -169,7 +169,7 @@ elif args.function == "finetune":
     train_dataset = dataset.NameDataset(corruption_dataset, text)
 
     tconf = trainer.TrainerConfig(
-        max_epochs=700,
+        max_epochs=10,
         batch_size=256,
         learning_rate=args.finetune_lr,
         lr_decay=True,
