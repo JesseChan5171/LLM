@@ -41,7 +41,7 @@ def precompute_rotary_emb(dim, max_positions):
     assert dim % 2 == 0, "Dimension must be divisible by 2"
 
     theta_numerator = torch.arange(0, dim, 2).float() # 0, 2, 4, ..., dim-2
-
+    '''
     theta = 1.0 / (10000.0 ** (theta_numerator / dim)) # (Dim / 2)
 
     m = torch.arange(max_positions)
@@ -49,7 +49,15 @@ def precompute_rotary_emb(dim, max_positions):
     freqs = torch.outer(m, theta).float() # (max_positions, dim / 2)
 
     rope_cache = torch.polar(torch.ones_like(freqs), freqs) # (max_positions, dim / 2)
+    '''
+    
+    theta = 1.0 / (10000.0 ** (theta_numerator / dim))
 
+    m = torch.arange(max_positions).float().unsqueeze(1)  # (max_positions, 1)
+    freqs = m @ theta.unsqueeze(0)  # (max_positions, dim / 2)
+
+    rope_cache = torch.stack((freqs.cos(), freqs.sin()), dim=-1)  # (max_positions, dim / 2, 2)
+    
     pass
     ### END YOUR CODE ###
     return rope_cache
@@ -78,7 +86,7 @@ def apply_rotary_emb(x, rope_cache):
     This reshapes x from (B, nh, T, hs) to (B, nh, T, hs/2, 2) and then views it as a complex tensor with shape (B, nh, T, hs/2).
     This is because the RoPE values are stored as complex numbers, so we need to convert the input tensor to a complex tensor to perform the multiplication.
     '''
-    x_complex = torch.view_as_complex(x.float().reshape(*x.shape[:-1], -1, 2)) # (B, nh, T, hs/2)
+    x_complex = torch.view_as_complex(x.float().reshape(*x.shape[:-1], -1, 2)) # (B, nh, T, hs/2) Because h2/2 contains complex numebr 
 
     ''' for the rope_cahe: It contains (max_positions, dim / 2)
     
